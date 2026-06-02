@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VideoChat</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.362a1 1 0 0 1-1.447.888L15 14"/><rect x="1" y="6" width="14" height="12" rx="2"/></svg>
+    <h1>VideoChat</h1>
+  </header>
+
+  <main id="lobby">
+    <p class="section-title">Your Name</p>
+    <div id="username-bar">
+      <input id="username-input" type="text" placeholder="Enter your name..." maxlength="30" />
+    </div>
+
+    <div id="create-section">
+      <input id="room-name-input" type="text" placeholder="Room name (optional)" maxlength="40" />
+      <button class="btn-primary" id="create-btn">+ Create Room</button>
+    </div>
+
+    <p class="section-title">Active Rooms</p>
+    <div id="room-list">
+      <p class="empty-state">Loading rooms...</p>
+    </div>
+  </main>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
