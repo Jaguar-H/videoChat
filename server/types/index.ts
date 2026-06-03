@@ -44,9 +44,16 @@ export interface LeaveMessage {
   roomId: string;
 }
 
+export interface ChatMessage {
+  type: "chat";
+  roomId: string;
+  text: string;
+}
+
 export type SignalMessage =
   | JoinMessage
   | OfferMessage
   | AnswerMessage
   | IceCandidateMessage
-  | LeaveMessage;
+  | LeaveMessage
+  | ChatMessage;

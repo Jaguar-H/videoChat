@@ -72,6 +72,16 @@ ws.get(
             safeSend(target.socket, { ...msg, from: currentUserId });
           }
         }
+
+        // Broadcast chat messages to all peers in the room
+        if (msg.type === "chat") {
+          const peers = getPeers(msg.roomId);
+          for (const peer of peers) {
+            if (peer.userId !== currentUserId) {
+              safeSend(peer.socket, { type: "chat", from: currentUserId, text: msg.text });
+            }
+          }
+        }
       },
 
       onClose() {

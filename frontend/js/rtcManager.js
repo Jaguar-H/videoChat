@@ -52,6 +52,13 @@ export class RTCManager {
     this._peers.clear();
   }
 
+  replaceVideoTrack(newTrack) {
+    for (const pc of this._peers.values()) {
+      const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+      if (sender) sender.replaceTrack(newTrack);
+    }
+  }
+
   _createPc(peerId, roomId, myId) {
     const pc = new RTCPeerConnection(RTC_CONFIG);
     this._peers.set(peerId, pc);

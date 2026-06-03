@@ -135,39 +135,185 @@ button:active { transform: scale(0.97); }
 /* ── Video call page ── */
 #call-page {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100vh;
-  padding: 20px;
-  gap: 16px;
+  height: 100dvh;
+  gap: 0;
 }
-#call-header {
+#call-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  background: #08080c;
+}
+
+/* Chat panel */
+#chat-panel {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid #ffffff10;
+}
+#chat-header {
+  padding: 14px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  border-bottom: 1px solid #ffffff10;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-#call-header h2 { font-size: 1rem; }
-#room-id-badge {
-  font-size: 0.75rem;
+#chat-toggle {
+  background: none;
+  border: none;
+  padding: 2px;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+#chat-toggle:hover { color: var(--text); }
+#chat-toggle:active { transform: none; }
+
+/* Collapsed state */
+#chat-panel.collapsed {
+  width: 48px;
+}
+#chat-panel.collapsed #chat-messages,
+#chat-panel.collapsed #chat-input-row {
+  display: none;
+}
+#chat-panel.collapsed #chat-header {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 16px 14px;
+  justify-content: space-between;
+  height: 100%;
+  border-bottom: none;
+  border-right: none;
+}
+#chat-panel.collapsed #chat-toggle svg {
+  transform: rotate(180deg);
+}
+#chat-panel {
+  transition: width 0.2s ease;
+}
+#chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#chat-messages::-webkit-scrollbar { width: 4px; }
+#chat-messages::-webkit-scrollbar-thumb { background: #ffffff18; border-radius: 4px; }
+.chat-msg { display: flex; flex-direction: column; gap: 2px; max-width: 100%; }
+.chat-msg .chat-author {
+  font-size: 0.7rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+.chat-msg.self .chat-author { color: var(--muted); text-align: right; }
+.chat-msg .chat-text {
+  font-size: 0.85rem;
   background: var(--surface2);
+  padding: 6px 10px;
+  border-radius: 8px;
+  word-break: break-word;
+  line-height: 1.4;
+}
+.chat-msg.self .chat-text {
+  background: var(--accent);
+  align-self: flex-end;
+}
+#chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #ffffff10;
+}
+#chat-input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1px solid #ffffff18;
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.875rem;
+  min-width: 0;
+}
+#chat-input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+#chat-send { padding: 8px 14px; font-size: 0.8rem; }
+/* Call header — overlaid at top of video area */
+#call-header {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(to bottom, rgba(8,8,12,0.85) 0%, transparent 100%);
+  transition: opacity 0.3s;
+}
+#header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#call-header h2 { font-size: 0.95rem; font-weight: 600; }
+#room-id-badge {
+  font-size: 0.7rem;
+  background: rgba(255,255,255,0.08);
   padding: 4px 10px;
   border-radius: 20px;
   color: var(--muted);
+  backdrop-filter: blur(8px);
 }
 
-/* Video grid */
+/* Status bar (inside header) */
+#status-bar {
+  font-size: 0.7rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+}
+.status-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+  background: #44cc88;
+  flex-shrink: 0;
+}
+.status-dot.connecting { background: #ffaa44; animation: pulse 1s infinite; }
+.status-dot.disconnected { background: #cc4444; }
+
+/* Video grid — fills entire call-main */
 #video-grid {
-  flex: 1;
+  width: 100%;
+  height: 100%;
   display: grid;
-  gap: 10px;
+  gap: 6px;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  overflow: hidden;
+  align-content: center;
+  padding: 6px;
 }
 .video-tile {
   position: relative;
-  background: var(--surface);
-  border-radius: var(--radius);
+  background: #111118;
+  border-radius: 12px;
   overflow: hidden;
   aspect-ratio: 16/9;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
 }
 .video-tile video {
   width: 100%;
@@ -178,12 +324,14 @@ button:active { transform: scale(0.97); }
 }
 .video-tile .label {
   position: absolute;
-  bottom: 8px;
+  bottom: 10px;
   left: 10px;
-  font-size: 0.75rem;
-  background: #00000088;
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-size: 0.72rem;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.2px;
 }
 .video-tile .no-video-overlay {
   position: absolute;
@@ -192,32 +340,73 @@ button:active { transform: scale(0.97); }
   align-items: center;
   justify-content: center;
   font-size: 2.5rem;
-  background: var(--surface2);
+  background: #1a1a2a;
 }
 
-/* Controls bar */
+/* PiP tile — local video when remote peers are present */
+.video-tile.pip {
+  position: absolute;
+  bottom: 90px;
+  right: 16px;
+  width: 150px;
+  height: auto;
+  aspect-ratio: 4/3;
+  z-index: 15;
+  border: 2px solid rgba(255,255,255,0.12);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  border-radius: 10px;
+  cursor: grab;
+  transition: box-shadow 0.15s;
+}
+.video-tile.pip:hover { box-shadow: 0 10px 32px rgba(0,0,0,0.8); }
+
+/* Floating controls bar */
 #controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
   display: flex;
-  justify-content: center;
-  gap: 14px;
-  padding: 10px 0;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(12,12,18,0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 50px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  transition: opacity 0.3s, transform 0.3s;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  white-space: nowrap;
 }
 
-/* Connection status */
-#status-bar {
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--muted);
+/* Leave button inside controls */
+#controls #leave-btn {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  border-radius: 50px;
 }
-.status-dot {
-  display: inline-block;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  margin-right: 6px;
-  background: #44cc88;
+
+/* Controls divider before leave */
+#controls .ctrl-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255,255,255,0.1);
+  flex-shrink: 0;
 }
-.status-dot.connecting { background: #ffaa44; animation: pulse 1s infinite; }
-.status-dot.disconnected { background: #cc4444; }
+
+/* Auto-hide controls */
+#call-main.controls-hidden #controls {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(6px);
+}
+#call-main.controls-hidden #call-header {
+  opacity: 0;
+  pointer-events: none;
+}
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -227,5 +416,48 @@ button:active { transform: scale(0.97); }
 /* Responsive */
 @media (max-width: 600px) {
   #create-section { flex-direction: column; }
-  #controls { gap: 8px; }
+  #lobby { margin: 20px auto; }
+
+  #call-page { flex-direction: column; }
+
+  #video-grid {
+    grid-template-columns: 1fr;
+  }
+  .video-tile { aspect-ratio: 4/3; }
+
+  #controls {
+    gap: 8px;
+    padding: 8px 12px;
+    bottom: 12px;
+  }
+  .btn-icon { width: 42px; height: 42px; }
+
+  .video-tile.pip {
+    width: 110px;
+    bottom: 80px;
+    right: 10px;
+  }
+
+  /* Chat panel stacks at bottom */
+  #chat-panel {
+    width: 100%;
+    height: 240px;
+    border-left: none;
+    border-top: 1px solid #ffffff10;
+    transition: height 0.2s ease;
+  }
+  #chat-panel.collapsed {
+    width: 100%;
+    height: 44px;
+  }
+  #chat-panel.collapsed #chat-header {
+    writing-mode: horizontal-tb;
+    height: auto;
+    padding: 12px 16px;
+    border-bottom: none;
+    justify-content: space-between;
+  }
+  #chat-panel.collapsed #chat-toggle svg {
+    transform: rotate(90deg);
+  }
 }

@@ -1,6 +1,6 @@
 import { SignalingClient } from "./signalingClient.js";
 import { RTCManager } from "./rtcManager.js";
-import { addLocalTile, addRemoteTile, removeTile, setVideoEnabled } from "./videoManager.js";
+import { addLocalTile, addRemoteTile, removeTile, setVideoEnabled, setLocalPip } from "./videoManager.js";
 
 const params = new URLSearchParams(location.search);
 const roomId = params.get("roomId");
@@ -17,6 +17,7 @@ const statusDot = document.getElementById("status-dot");
 const statusText = document.getElementById("status-text");
 const micBtn = document.getElementById("mic-btn");
 const camBtn = document.getElementById("cam-btn");
+const flipBtn = document.getElementById("flip-btn");
 const leaveBtn = document.getElementById("leave-btn");
 
 if (!roomId) {
@@ -35,10 +36,11 @@ fetch(`/api/rooms/${roomId}`)
 let localStream;
 let micOn = true;
 let camOn = true;
+let facingMode = "user";
 
 async function getMedia() {
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: true });
   } catch {
     // Camera/mic denied — create silent/black stream so we can still connect
     localStream = new MediaStream();
@@ -94,15 +96,24 @@ function handleSignal(msg) {
     updateStatus();
     return;
   }
+
+  if (msg.type === "chat") {
+    const name = peerNames.get(msg.from) || "Peer";
+    appendChatMessage(name, msg.text, false);
+    return;
+  }
 }
 
 function onRemoteStream(peerId, stream) {
   const name = peerNames.get(peerId) || "Peer";
   addRemoteTile(peerId, stream, name);
+  setLocalPip(true);
 }
 
 function onRemoteLeft(peerId) {
   removeTile(peerId);
+  const hasRemotes = document.querySelectorAll(".video-tile:not(#tile-local)").length > 0;
+  setLocalPip(hasRemotes);
 }
 
 function setStatus(state, text) {
@@ -135,6 +146,71 @@ camBtn.addEventListener("click", () => {
   camBtn.className = `btn-icon ${camOn ? "active" : "muted"}`;
   setVideoEnabled("local", camOn);
 });
+
+// ── Camera flip ────────────────────────────────────────────────────────────
+navigator.mediaDevices.enumerateDevices().then((devices) => {
+  const cams = devices.filter((d) => d.kind === "videoinput");
+  if (cams.length > 1) flipBtn.style.display = "";
+}).catch(() => {});
+
+flipBtn.addEventListener("click", async () => {
+  facingMode = facingMode === "user" ? "environment" : "user";
+  try {
+    const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: false });
+    const newTrack = newStream.getVideoTracks()[0];
+    const oldTrack = localStream.getVideoTracks()[0];
+    if (oldTrack) { localStream.removeTrack(oldTrack); oldTrack.stop(); }
+    localStream.addTrack(newTrack);
+    const localVideo = document.querySelector("#tile-local video");
+    if (localVideo) localVideo.srcObject = localStream;
+    rtc.replaceVideoTrack(newTrack);
+  } catch {
+    facingMode = facingMode === "user" ? "environment" : "user"; // revert on failure
+  }
+});
+
+// ── Chat ───────────────────────────────────────────────────────────────────
+const chatInput = document.getElementById("chat-input");
+const chatSend = document.getElementById("chat-send");
+const chatMessages = document.getElementById("chat-messages");
+
+function appendChatMessage(author, text, self) {
+  const msg = document.createElement("div");
+  msg.className = `chat-msg${self ? " self" : ""}`;
+  msg.innerHTML = `<span class="chat-author">${author}</span><span class="chat-text">${text.replace(/</g, "&lt;")}</span>`;
+  chatMessages.appendChild(msg);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function sendChat() {
+  const text = chatInput.value.trim();
+  if (!text) return;
+  sig.send({ type: "chat", roomId, text });
+  appendChatMessage("You", text, true);
+  chatInput.value = "";
+}
+
+chatSend.addEventListener("click", sendChat);
+chatInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendChat(); });
+
+const chatPanel = document.getElementById("chat-panel");
+document.getElementById("chat-toggle").addEventListener("click", () => {
+  chatPanel.classList.toggle("collapsed");
+});
+
+// ── Auto-hide controls ─────────────────────────────────────────────────────
+const callMain = document.getElementById("call-main");
+let hideTimer;
+
+function showControls() {
+  callMain.classList.remove("controls-hidden");
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => callMain.classList.add("controls-hidden"), 3000);
+}
+
+callMain.addEventListener("mousemove", showControls);
+callMain.addEventListener("touchstart", showControls, { passive: true });
+showControls();
 
 leaveBtn.addEventListener("click", leave);
 

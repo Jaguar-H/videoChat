@@ -21,6 +21,19 @@ export function setVideoEnabled(userId, enabled) {
   if (video) video.style.display = enabled ? "block" : "none";
 }
 
+export function setLocalPip(enabled) {
+  const tile = document.getElementById("tile-local");
+  const main = document.getElementById("call-main");
+  if (!tile) return;
+  if (enabled) {
+    tile.classList.add("pip");
+    main.appendChild(tile);
+  } else {
+    tile.classList.remove("pip");
+    grid.prepend(tile);
+  }
+}
+
 function addTile(id, stream, label, muted) {
   const tile = document.createElement("div");
   tile.className = "video-tile";
